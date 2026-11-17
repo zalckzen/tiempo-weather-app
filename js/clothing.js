@@ -1,0 +1,320 @@
+﻿/**
+ * Clothing Recommendation Engine
+ * Provides intelligent clothing suggestions based on weather conditions
+ */
+
+const CLOTHING = (function() {
+    // Weather code mapping (WMO codes) - Catalan translations
+    const WEATHER_CODES = {
+        0: { desc: "Cel clar", icon: "sun", main: "Solell" },
+        1: { desc: "Principalment clar", icon: "sun", main: "Majoria solell" },
+        2: { desc: "Parcialment ennuvolat", icon: "cloud-sun", main: "Parcialment ennuvolat" },
+        3: { desc: "Ennuvolat", icon: "cloud", main: "Ennuvolat" },
+        45: { desc: "Boira", icon: "cloud-fog", main: "Boira" },
+        48: { desc: "Boira gelada", icon: "cloud-fog", main: "Boira gelada" },
+        51: { desc: "Bruineig lleu", icon: "cloud-drizzle", main: "Bruineig lleu" },
+        53: { desc: "Bruineig moderat", icon: "cloud-drizzle", main: "Bruineig" },
+        55: { desc: "Bruineig dens", icon: "cloud-drizzle", main: "Bruineig fort" },
+        56: { desc: "Bruineig gelada lleu", icon: "cloud-drizzle", main: "Bruineig gelada" },
+        57: { desc: "Bruineig gelada dens", icon: "cloud-drizzle", main: "Bruineig gelada" },
+        61: { desc: "Pluja lleu", icon: "cloud-rain", main: "Pluja lleu" },
+        63: { desc: "Pluja moderada", icon: "cloud-rain", main: "Pluja" },
+        65: { desc: "Pluja forta", icon: "cloud-rain", main: "Pluja forta" },
+        66: { desc: "Pluja gelada lleu", icon: "cloud-rain", main: "Pluja gelada" },
+        67: { desc: "Pluja gelada forta", icon: "cloud-rain", main: "Pluja gelada" },
+        71: { desc: "Neu lleu", icon: "cloud-snow", main: "Neu lleu" },
+        73: { desc: "Neu moderada", icon: "cloud-snow", main: "Neu" },
+        75: { desc: "Neu forta", icon: "cloud-snow", main: "Neu forta" },
+        77: { desc: "Graus de neu", icon: "cloud-snow", main: "Graus de neu" },
+        80: { desc: "Mostres de pluja lleus", icon: "cloud-rain", main: "Mostres de pluja" },
+        81: { desc: "Mostres de pluja moderades", icon: "cloud-rain", main: "Mostres de pluja" },
+        82: { desc: "Mostres de pluja violentes", icon: "cloud-rain", main: "Mostres fortes" },
+        85: { desc: "Mostres de neu lleus", icon: "cloud-snow", main: "Mostres de neu" },
+        86: { desc: "Mostres de neu fortes", icon: "cloud-snow", main: "Mostres de neu fortes" },
+        95: { desc: "Tempesta", icon: "cloud-lightning", main: "Tempesta" },
+        96: { desc: "Tempesta amb granizo", icon: "cloud-lightning", main: "Tempesta" },
+        99: { desc: "Tempesta amb granizo fort", icon: "cloud-lightning", main: "Tempesta" }
+    };
+
+    // Clothing items with icons (SVG paths) - Catalan names
+    const CLOTHING_ITEMS = {
+        outerwear: {
+            heavyCoat: { name: "Abrig pesat", icon: "coat", threshold: 5 },
+            coat: { name: "Abrig", icon: "coat", threshold: 10 },
+            jacket: { name: "Jaqueta", icon: "jacket", threshold: 15 },
+            hoodie: { name: "Sudadera amb caputxa", icon: "hoodie", threshold: 18 },
+            sweater: { name: "Jersei", icon: "sweater", threshold: 20 },
+            lightCardigan: { name: "Cárdigan lleuger", icon: "cardigan", threshold: 22 },
+            none: { name: "No cal roba exterior", icon: "tshirt", threshold: 25 }
+        },
+        tops: {
+            longSleeve: { name: "Samarreta de manga llarga", icon: "longsleeve", threshold: 20 },
+            shortSleeve: { name: "Samarreta de manga curta", icon: "tshirt", threshold: 25 },
+            tankTop: { name: "Top de tirants", icon: "tanktop", threshold: 28 }
+        },
+        bottoms: {
+            longPants: { name: "Pantalons llargs", icon: "pants", threshold: 18 },
+            jeans: { name: "Jeans/Xinos", icon: "pants", threshold: 22 },
+            shorts: { name: "Pantalons curts", icon: "shorts", threshold: 25 }
+        },
+        rainGear: {
+            raincoat: { name: "Impermeable", icon: "raincoat" },
+            umbrella: { name: "Paraigua", icon: "umbrella" },
+            none: { name: "No cal equip de pluja", icon: "sun" }
+        },
+        accessories: {
+            scarf: { name: "Bufanda", icon: "scarf", threshold: 10 },
+            gloves: { name: "Guants", icon: "gloves", threshold: 5 },
+            beanie: { name: "Gorro", icon: "beanie", threshold: 10 },
+            sunglasses: { name: "Ulleres de sol", icon: "sunglasses" }
+        }
+    };
+
+    /**
+     * Get weather description from code
+     */
+    function getWeatherInfo(code) {
+        return WEATHER_CODES[code] || { desc: "Desconegut", icon: "cloud", main: "Desconegut" };
+    }
+
+    /**
+     * Determine wind description from speed and direction
+     */
+    function getWindInfo(speed, direction) {
+        const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+        const dirIndex = Math.round(direction / 22.5) % 16;
+        
+        let strength = "";
+        if (speed < 1) strength = "Calm";
+        else if (speed < 6) strength = "Brega suau";
+        else if (speed < 12) strength = "Brega moderada";
+        else if (speed < 20) strength = "Brega fresca";
+        else if (speed < 29) strength = "Brega forta";
+        else if (speed < 39) strength = "Vent fort";
+        else if (speed < 50) strength = "Vent molt fort";
+        else strength = "Tempesta";
+
+        return { speed, direction: directions[dirIndex], strength };
+    }
+
+    /**
+     * Get clothing recommendation for a single location
+     */
+    function getRecommendations(weatherData) {
+        const current = weatherData.current;
+        const daily = weatherData.daily;
+        const temp = current.temperature;
+        const feelsLike = current.feelsLike;
+        const humidity = current.humidity;
+        const windSpeed = current.windSpeed;
+        const rainProb = current.precipitationProbability;
+        const weatherCode = current.weatherCode;
+        const weatherInfo = getWeatherInfo(weatherCode);
+        const windInfo = getWindInfo(windSpeed, current.windDirection);
+
+        // Use "feels like" temperature for recommendations
+        const effectiveTemp = feelsLike;
+        
+        // Wind chill factor
+        const windChill = windSpeed > 5 ? Math.max(0, windSpeed - 5) : 0;
+        const adjustedTemp = effectiveTemp - windChill * 0.5;
+
+        // Determine recommendations
+        const outerwear = getOuterwear(adjustedTemp, rainProb, weatherCode);
+        const top = getTop(adjustedTemp);
+        const bottom = getBottom(adjustedTemp);
+        const rainGear = getRainGear(rainProb, weatherCode, daily.precipitationProbability[0]);
+        const accessories = getAccessories(adjustedTemp, windSpeed, weatherCode);
+
+        // Build reasons
+        const reasons = buildReasons({
+            temp,
+            feelsLike,
+            adjustedTemp,
+            humidity,
+            windSpeed,
+            windInfo,
+            rainProb,
+            weatherCode,
+            weatherInfo
+        });
+
+        return {
+            location: weatherData.location,
+            current: {
+                temperature: temp,
+                feelsLike,
+                humidity,
+                windSpeed,
+                windDirection: windInfo.direction,
+                windStrength: windInfo.strength,
+                weatherCode,
+                weatherMain: weatherInfo.main,
+                weatherDesc: weatherInfo.desc,
+                weatherIcon: weatherInfo.icon,
+                precipitationProbability: rainProb
+            },
+            recommendations: {
+                outerwear,
+                top,
+                bottom,
+                rainGear,
+                accessories
+            },
+            reasons,
+            summary: buildSummary(outerwear, top, bottom, rainGear, accessories, reasons)
+        };
+    }
+
+    function getOuterwear(temp, rainProb, weatherCode) {
+        const isRainy = [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(weatherCode);
+        
+        if (temp <= 5) return { ...CLOTHING_ITEMS.outerwear.heavyCoat, status: "recommended", reason: "Temperatures molt fredes" };
+        if (temp <= 10) return { ...CLOTHING_ITEMS.outerwear.coat, status: "recommended", reason: "Temperatures fredes" };
+        if (temp <= 15) return { ...CLOTHING_ITEMS.outerwear.jacket, status: "recommended", reason: "Temperatures fresques" };
+        if (temp <= 18) {
+            if (isRainy || rainProb > 50) return { ...CLOTHING_ITEMS.outerwear.jacket, status: "recommended", reason: "Fresc amb possibilitat de pluja" };
+            return { ...CLOTHING_ITEMS.outerwear.hoodie, status: "recommended", reason: "Temperatures fresques" };
+        }
+        if (temp <= 20) return { ...CLOTHING_ITEMS.outerwear.sweater, status: "recommended", reason: "Temperatures suaus" };
+        if (temp <= 22) return { ...CLOTHING_ITEMS.outerwear.lightCardigan, status: "optional", reason: "Suau, capa opcional" };
+        return { ...CLOTHING_ITEMS.outerwear.none, status: "not-needed", reason: "Temperatures càlides" };
+    }
+
+    function getTop(temp) {
+        if (temp <= 20) return { ...CLOTHING_ITEMS.tops.longSleeve, status: "recommended", reason: "Temperatures fresques" };
+        if (temp <= 25) return { ...CLOTHING_ITEMS.tops.shortSleeve, status: "recommended", reason: "Temperatures suaus a càlides" };
+        return { ...CLOTHING_ITEMS.tops.tankTop, status: "recommended", reason: "Temperatures caloroses" };
+    }
+
+    function getBottom(temp) {
+        if (temp <= 18) return { ...CLOTHING_ITEMS.bottoms.longPants, status: "recommended", reason: "Temperatures fresques" };
+        if (temp <= 22) return { ...CLOTHING_ITEMS.bottoms.jeans, status: "recommended", reason: "Temperatures suaus" };
+        return { ...CLOTHING_ITEMS.bottoms.shorts, status: "recommended", reason: "Temperatures càlides" };
+    }
+
+    function getRainGear(currentRainProb, weatherCode, dailyMaxRainProb) {
+        const isRainy = [51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(weatherCode);
+        const maxRainProb = Math.max(currentRainProb, dailyMaxRainProb);
+        
+        if (isRainy || maxRainProb >= 70) {
+            return { ...CLOTHING_ITEMS.rainGear.raincoat, status: "recommended", reason: `Alta probabilitat de pluja (${maxRainProb}%)` };
+        }
+        if (maxRainProb >= 30) {
+            return { ...CLOTHING_ITEMS.rainGear.umbrella, status: "recommended", reason: `Probabilitat moderada de pluja (${maxRainProb}%)` };
+        }
+        return { ...CLOTHING_ITEMS.rainGear.none, status: "not-needed", reason: "Baixa probabilitat de pluja" };
+    }
+
+    function getAccessories(temp, windSpeed, weatherCode) {
+        const items = [];
+        const isSunny = [0, 1].includes(weatherCode);
+        
+        if (temp <= 10) {
+            items.push({ ...CLOTHING_ITEMS.accessories.scarf, status: "recommended", reason: "Temperatures fredes" });
+            items.push({ ...CLOTHING_ITEMS.accessories.gloves, status: "recommended", reason: "Temperatures fredes" });
+            items.push({ ...CLOTHING_ITEMS.accessories.beanie, status: "recommended", reason: "Temperatures fredes" });
+        } else if (temp <= 15) {
+            items.push({ ...CLOTHING_ITEMS.accessories.scarf, status: "optional", reason: "Temperatures fresques" });
+            items.push({ ...CLOTHING_ITEMS.accessories.beanie, status: "optional", reason: "Temperatures fresques" });
+        }
+        
+        if (windSpeed > 15) {
+            items.push({ ...CLOTHING_ITEMS.accessories.scarf, status: "recommended", reason: "Condicions de vent" });
+        }
+        
+        if (isSunny) {
+            items.push({ ...CLOTHING_ITEMS.accessories.sunglasses, status: "recommended", reason: "Condicions assolellades" });
+        }
+        
+        return items;
+    }
+
+    function buildReasons(data) {
+        const reasons = [];
+        
+        if (data.feelsLike !== data.temp) {
+            reasons.push(`Sensació de ${Math.round(data.feelsLike)}°C (real: ${Math.round(data.temp)}°C)`);
+        }
+        if (data.windSpeed > 10) {
+            reasons.push(`${data.windStrength} (${Math.round(data.windSpeed)} km/h ${data.windDirection})`);
+        }
+        if (data.humidity > 70) {
+            reasons.push(`Humitat alta (${Math.round(data.humidity)}%)`);
+        }
+        if (data.rainProb > 30) {
+            reasons.push(`${data.weatherDesc}, ${Math.round(data.rainProb)}% probabilitat de pluja`);
+        } else {
+            reasons.push(data.weatherDesc);
+        }
+        
+        return reasons;
+    }
+
+    function buildSummary(outerwear, top, bottom, rainGear, accessories, reasons) {
+        const parts = [];
+        
+        if (outerwear.status !== "not-needed") parts.push(outerwear.name);
+        parts.push(top.name);
+        parts.push(bottom.name);
+        if (rainGear.status !== "not-needed") parts.push(rainGear.name);
+        
+        const recommendedAccessories = accessories.filter(a => a.status === "recommended");
+        if (recommendedAccessories.length > 0) {
+            parts.push(recommendedAccessories.map(a => a.name).join(", "));
+        }
+        
+        return parts.join(" • ");
+    }
+
+    /**
+     * Get all recommendations for all locations
+     */
+    function getAllRecommendations(weatherResults) {
+        const recommendations = {};
+        Object.entries(weatherResults).forEach(([key, data]) => {
+            recommendations[key] = getRecommendations(data);
+        });
+        return recommendations;
+    }
+
+    // SVG Icons for clothing items
+    const ICONS = {
+        sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`,
+        cloud: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>`,
+        "cloud-sun": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>`,
+        "cloud-fog": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><line x1="3" y1="16" x2="21" y2="16"></line><line x1="3" y1="20" x2="21" y2="20"></line></svg>`,
+        "cloud-drizzle": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><line x1="8" y1="19" x2="8" y2="21"></line><line x1="12" y1="19" x2="12" y2="21"></line><line x1="16" y1="19" x2="16" y2="21"></line></svg>`,
+        "cloud-rain": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><line x1="8" y1="19" x2="8" y2="22"></line><line x1="12" y1="19" x2="12" y2="22"></line><line x1="16" y1="19" x2="16" y2="22"></line></svg>`,
+        "cloud-snow": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><circle cx="8" cy="21" r="1"></circle><circle cx="12" cy="21" r="1"></circle><circle cx="16" cy="21" r="1"></circle></svg>`,
+        "cloud-lightning": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="13 11 9 17 11 17 7 23"></polyline></svg>`,
+        coat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h20"></path><path d="M20 3v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V3"></path><path d="M10 3v18"></path><path d="M14 3v18"></path></svg>`,
+        jacket: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h20"></path><path d="M20 3v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V3"></path></svg>`,
+        hoodie: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+        sweater: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h20"></path><path d="M20 3v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V3"></path><path d="M6 15h12"></path></svg>`,
+        cardigan: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h20"></path><path d="M20 3v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V3"></path><path d="M4 3v12"></path></svg>`,
+        tshirt: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 3H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"></path><path d="M8 21V11"></path><path d="M16 21V11"></path><path d="M12 3v4"></path></svg>`,
+        longsleeve: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M8 21V7"></path><path d="M16 21V7"></path><path d="M12 3v4"></path></svg>`,
+        tanktop: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10"></path><path d="M5 3v18h14V3"></path><path d="M7 12h10"></path></svg>`,
+        pants: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18"></path><path d="M19 3v18"></path><path d="M5 3h14"></path><path d="M5 21h14"></path></svg>`,
+        shorts: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v10"></path><path d="M19 3v10"></path><path d="M5 3h14"></path><path d="M5 13h14"></path></svg>`,
+        raincoat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h20"></path><path d="M20 3v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V3"></path><line x1="8" y1="19" x2="8" y2="22"></line><line x1="12" y1="19" x2="12" y2="22"></line><line x1="16" y1="19" x2="16" y2="22"></line></svg>`,
+        umbrella: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 13v8"></path><path d="M12 13a8 8 0 0 0 8-8"></path><path d="M12 13a8 8 0 0 1-8-8"></path></svg>`,
+        scarf: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"></path><path d="M8 10h8"></path><path d="M8 14h8"></path></svg>`,
+        gloves: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v14"></path><path d="M4 15h16"></path></svg>`,
+        beanie: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0-6 6v2h12V9a6 6 0 0 0-6-6z"></path><path d="M12 3v6"></path></svg>`,
+        sunglasses: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="15" r="4"></circle><circle cx="18" cy="15" r="4"></circle><line x1="10" y1="15" x2="14" y2="15"></line><line x1="6" y1="11" x2="6" y2="3"></line><line x1="18" y1="11" x2="18" y2="3"></line></svg>`,
+        location: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>`
+    };
+
+    // Public API
+    return {
+        getRecommendations,
+        getAllRecommendations,
+        getWeatherInfo,
+        getWindInfo,
+        ICONS,
+        WEATHER_CODES,
+        CLOTHING_ITEMS
+    };
+})();

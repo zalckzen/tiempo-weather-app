@@ -1,0 +1,129 @@
+﻿<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aplicació del temps per Coma-ruga i Calafell - Recomanacions de roba intel·ligents basades en el temps">
+    <title>Temps - Guia del Temps i Ruba</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="app-title">Temps</h1>
+                    <span class="app-subtitle">Guia intel·ligent de temps i roba</span>
+                </div>
+                <div class="header-center">
+                    <div class="current-datetime" id="currentDatetime">
+                        <span class="date" id="currentDate"></span>
+                        <span class="time" id="currentTime"></span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Canviar mode fosc">
+                        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                    <button class="refresh-btn" id="refreshBtn" aria-label="Actualitzar dades meteorològiques">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M1 20v-6h6"></path>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+        <main class="main">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Carregant dades meteorològiques...</p>
+            </div>
+            <div class="error-banner" id="errorBanner" role="alert">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span id="errorMessage"></span>
+                <button class="error-dismiss" id="errorDismiss" aria-label="Tancar error">&times;</button>
+            </div>
+            <section class="weather-section" aria-label="Temps actual">
+                <div class="weather-grid" id="weatherGrid"></div>
+            </section>
+            <section class="clothing-section" aria-label="Recomanacions de roba">
+                <h2 class="section-title">Què posar-se avui</h2>
+                <div class="clothing-grid" id="clothingGrid"></div>
+            </section>
+            <section class="forecast-section" aria-label="Previsió del temps">
+                <div class="forecast-tabs">
+                    <button class="forecast-tab active" data-tab="hourly" id="hourlyTab">Horal</button>
+                    <button class="forecast-tab" data-tab="daily" id="dailyTab">7 dies</button>
+                    <button class="forecast-tab" data-tab="charts" id="chartsTab">Gràfics</button>
+                </div>
+                <div class="forecast-content">
+                    <div class="forecast-panel active" id="hourlyPanel" role="tabpanel">
+                        <div class="location-selector">
+                            <label for="hourlyLocation">Ubicació:</label>
+                            <select id="hourlyLocation" class="location-select">
+                                <option value="comaruga">Coma-ruga</option>
+                                <option value="calafell">Calafell</option>
+                            </select>
+                        </div>
+                        <div class="hourly-scroll" id="hourlyScroll" role="list"></div>
+                    </div>
+                    <div class="forecast-panel" id="dailyPanel" role="tabpanel">
+                        <div class="location-selector">
+                            <label for="dailyLocation">Ubicació:</label>
+                            <select id="dailyLocation" class="location-select">
+                                <option value="comaruga">Coma-ruga</option>
+                                <option value="calafell">Calafell</option>
+                            </select>
+                        </div>
+                        <div class="daily-grid" id="dailyGrid" role="list"></div>
+                    </div>
+                    <div class="forecast-panel" id="chartsPanel" role="tabpanel">
+                        <div class="location-selector">
+                            <label for="chartsLocation">Ubicació:</label>
+                            <select id="chartsLocation" class="location-select">
+                                <option value="comaruga">Coma-ruga</option>
+                                <option value="calafell">Calafell</option>
+                            </select>
+                        </div>
+                        <div class="charts-container">
+                            <div class="chart-wrapper"><canvas id="tempChart" aria-label="Gràfic de temperatura"></canvas></div>
+                            <div class="chart-wrapper"><canvas id="rainWindChart" aria-label="Gràfic de pluja i vent"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <footer class="footer">
+            <p>Dades proporcionades per <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a></p>
+            <p class="update-info">Darrera actualització: <span id="lastUpdated">--</span></p>
+        </footer>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/clothing.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
