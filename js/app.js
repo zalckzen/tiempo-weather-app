@@ -1,4 +1,5 @@
-﻿/**
+﻿@"
+/**
  * Main Application Module
  * Initializes and coordinates all components
  */
@@ -8,6 +9,13 @@ const APP = (function() {
     let currentRecommendations = null;
     let updateInterval = null;
     const UPDATE_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+
+    /**
+     * Get API instance (handles both window.API and global API)
+     */
+    function getAPI() {
+        return (typeof window !== "undefined" && window.API) || (typeof API !== "undefined" ? API : null);
+    }
 
     /**
      * Initialize the application
@@ -85,7 +93,12 @@ const APP = (function() {
         UI.hideError();
         
         try {
-            const { results, errors } = await API.fetchAllWeather();
+            const api = getAPI();
+            if (!api) {
+                throw new Error("Mòdul API no disponible. Recarregui la pàgina.");
+            }
+            
+            const { results, errors } = await api.fetchAllWeather();
             
             if (Object.keys(results).length === 0) {
                 throw new Error("Error en obtenir dades meteorològiques de totes les ubicacions");
@@ -171,3 +184,4 @@ const APP = (function() {
         stopAutoUpdate
     };
 })();
+"@

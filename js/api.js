@@ -18,7 +18,7 @@ const API = (function() {
             lat: 41.2000,
             lon: 1.5667,
             timezone: "Europe/Madrid",
-            type: "Lloc d'"'"'estudis"
+            type: "Lloc d'""'estudis"
         }
     };
 
@@ -190,11 +190,18 @@ const API = (function() {
     }
 
     // Public API
-    return {
+    const publicAPI = {
         fetchAllWeather,
         fetchLocationWeather,
         getLocationInfo,
         getAllLocations,
         LOCATIONS
     };
+
+    // Explicitly expose on window for cross-script compatibility
+    if (typeof window !== "undefined") {
+        window.API = publicAPI;
+    }
+
+    return publicAPI;
 })();
