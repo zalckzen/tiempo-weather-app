@@ -24,7 +24,7 @@ const API = (function() {
 
     const BASE_URL = 'https://api.open-meteo.com/v1/forecast';
     const CACHE_KEY = 'weather_cache';
-    const CACHE_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+    const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour - longer cache to avoid rate limiting
 
     /**
      * Get cached weather data if valid
@@ -244,7 +244,7 @@ const API = (function() {
                     results[key] = await fetchLocationWeather(key);
                 } catch (error) {
                     errors[key] = error.message;
-                })
+                }
             })
         );
 
