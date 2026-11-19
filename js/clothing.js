@@ -265,7 +265,7 @@ const CLOTHING = (function() {
         const reasons = [];
         
         if (data.feelsLike !== data.temp) {
-            reasons.push('Sensacio de ' + Math.round(data.feelsLike) + '°C (real: ' + Math.round(data.temp) + '°C)');
+            reasons.push('SensaciÃ³ de ' + Math.round(data.feelsLike) + 'Â°C (real: ' + Math.round(data.temp) + 'Â°C)');
         }
         if (data.windSpeed > 10) {
             reasons.push(data.windStrength + ' (' + Math.round(data.windSpeed) + ' km/h ' + data.windDirection + ')');

@@ -152,13 +152,13 @@ const UI = (function() {
             '                </div>\n' +
             '                <div class=\"current-temp\">\n' +
             '                    <span class=\"temp-value\">' + Math.round(current.temperature) + '</span>\n' +
-            '                    <span class=\"temp-unit\">°C</span>\n' +
+            '                    <span class=\"temp-unit\">Â°C</span>\n' +
             '                </div>\n' +
             '            </div>\n' +
             '            <div class=\"card-body\">\n' +
             '                <div class=\"weather-metric\">\n' +
-            '                    <div class=\"metric-label\">Sensació tèrmica</div>\n' +
-            '                    <div class=\"metric-value\">' + Math.round(current.feelsLike) + '°C</div>\n' +
+            '                    <div class=\"metric-label\">SensaciÃ³ tÃ¨rmica</div>\n' +
+            '                    <div class=\"metric-value\">' + Math.round(current.feelsLike) + 'Â°C</div>\n' +
             '                </div>\n' +
             '                <div class=\"weather-metric\">\n' +
             '                    <div class=\"metric-label\">Humitat</div>\n' +
@@ -317,9 +317,9 @@ const UI = (function() {
         var nextRainHtml = '';
         if (analysis.nextRainTime) {
             var nextHour = analysis.nextRainTime.hour.toString().padStart(2, '0') + ':' + analysis.nextRainTime.minute.toString().padStart(2, '0');
-            nextRainHtml = '<div class=\"rain-next\"><strong>Pròxima pluja:</strong> ' + nextHour + ' (' + Math.round(analysis.nextRainTime.precipitationProbability) + '%, ' + analysis.nextRainTime.precipitation.toFixed(1) + ' mm)</div>';
+            nextRainHtml = '<div class=\"rain-next\"><strong>PrÃ²xima pluja:</strong> ' + nextHour + ' (' + Math.round(analysis.nextRainTime.precipitationProbability) + '%, ' + analysis.nextRainTime.precipitation.toFixed(1) + ' mm)</div>';
         } else {
-            nextRainHtml = '<div class=\"rain-next\"><strong>Pròxima pluja:</strong> No s\'esperen més precipitacions avui</div>';
+            nextRainHtml = '<div class=\"rain-next\"><strong>PrÃ²xima pluja:</strong> No s\'esperen mÃ©s precipitacions avui</div>';
         }
         
         // Rain end time
@@ -330,7 +330,7 @@ const UI = (function() {
         }
         
         // Schedule description
-        var scheduleHtml = schedule.map(function(p) { return p.label + ': ' + p.start + '–' + p.end; }).join(', ');
+        var scheduleHtml = schedule.map(function(p) { return p.label + ': ' + p.start + 'â€“' + p.end; }).join(', ');
         
         card.innerHTML = '\n' +
             '            <div class=\"rain-header\">\n' +
@@ -356,7 +356,7 @@ const UI = (function() {
             '            <div class=\"rain-details\">\n' +
             '                <div class=\"rain-summary\">\n' +
             '                    <div class=\"rain-stat\">\n' +
-            '                        <span class=\"rain-stat-label\">Prob. màxima</span>\n' +
+            '                        <span class=\"rain-stat-label\">Prob. mÃ xima</span>\n' +
             '                        <span class=\"rain-stat-value\">' + Math.round(summary.maxProbability) + '%</span>\n' +
             '                    </div>\n' +
             '                    <div class=\"rain-stat\">\n' +
@@ -364,7 +364,7 @@ const UI = (function() {
             '                        <span class=\"rain-stat-value\">' + summary.totalPrecipitation.toFixed(1) + ' mm</span>\n' +
             '                    </div>\n' +
             '                    <div class=\"rain-stat\">\n' +
-            '                        <span class=\"rain-stat-label\">Pluja màxima</span>\n' +
+            '                        <span class=\"rain-stat-label\">Pluja mÃ xima</span>\n' +
             '                        <span class=\"rain-stat-value\">' + summary.maxPrecipitation.toFixed(1) + ' mm</span>\n' +
             '                    </div>\n' +
             '                    <div class=\"rain-stat\">\n' +
@@ -418,7 +418,7 @@ const UI = (function() {
                 '                <div class=\"hourly-icon\">\n' +
                 '                    ' + (CLOTHING.ICONS[weatherInfo.icon] || CLOTHING.ICONS.cloud) + '\n' +
                 '                </div>\n' +
-                '                <div class=\"hourly-temp\">' + Math.round(data.hourly.temperature[hourIndex]) + '°</div>\n' +
+                '                <div class=\"hourly-temp\">' + Math.round(data.hourly.temperature[hourIndex]) + 'Â°C<\/div>\n' +
                 '                <div class=\"hourly-rain\">\n' +
                 '                    ' + CLOTHING.ICONS.umbrella + '\n' +
                 '                    ' + Math.round(data.hourly.precipitationProbability[hourIndex]) + '%\n' +
@@ -464,8 +464,8 @@ const UI = (function() {
                 '                    <span class=\"daily-condition-text\">' + weatherInfo.main + '</span>\n' +
                 '                </div>\n' +
                 '                <div class=\"daily-temps\">\n' +
-                '                    <span class=\"daily-high\">' + Math.round(data.daily.tempMax[i]) + '°</span>\n' +
-                '                    <span class=\"daily-low\">' + Math.round(data.daily.tempMin[i]) + '°</span>\n' +
+                '                    <span class=\"daily-high\">' + Math.round(data.daily.tempMax[i]) + 'Â°C<\/span>\n' +
+                '                    <span class=\"daily-low\">' + Math.round(data.daily.tempMin[i]) + 'Â°C<\/span>\n' +
                 '                </div>\n' +
                 '                <div class=\"daily-rain\">\n' +
                 '                    <div class=\"daily-rain-value\">\n' +
@@ -521,7 +521,7 @@ const UI = (function() {
                             pointHoverRadius: 6
                         },
                         {
-                            label: 'Sensació tèrmica',
+                            label: 'SensaciÃ³ tÃ¨rmica',
                             data: data.hourly.feelsLike.slice(0, 24),
                             borderColor: '#f59e0b',
                             backgroundColor: 'rgba(245, 158, 11, 0.1)',
@@ -533,7 +533,7 @@ const UI = (function() {
                         }
                     ]
                 },
-                options: getChartOptions('Temperatura (°C)')
+                options: getChartOptions('Temperatura (Â°C)')
             });
         }
 
