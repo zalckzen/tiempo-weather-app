@@ -126,6 +126,8 @@ Llicència MIT - Sentiu-vos lliures d'utilitzar i modificar per projectes person
 - Gràfics: [Chart.js](https://www.chartjs.org/)
 - Font: [Inter](https://fonts.google.com/specimen/Inter)
 - Icones: SVG personalitzats basats en símbols meteorològics/de roba comuns
+- Guillem Gimeno Martí
+- Abdul Rahman Maricon
 
 ---
 
